@@ -1,0 +1,17 @@
+[project]
+name = "tickwise"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "nanodjango>=0.9.1",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "django-types>=0.19.1",
+    "pyright>=1.1.383",
+    "pytest>=8.3.3",
+    "ruff>=0.6.9",
+]
