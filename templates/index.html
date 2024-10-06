@@ -1,0 +1,14 @@
+<h1>Welcome to TickWise</h1>
+
+<p>You have completed {{ trade_count }} trade{{ trade_count|pluralize }}</p>
+<p>Your win count is {{ win_count }}</p>
+<p>Your loss count is {{ loss_count }}</p>
+<p>Your strike rate is {{ strike_rate }}%</p>
+<p>Your average winner is {{ average_winner }}R</p>
+<p>Your average loser is {{ average_loser }}R</p>
+<p>Your expectancy is {{ expectancy }}R</p>
+<p>You have {{ winning_days_count }} winning day{{ winning_days_count|pluralize }}</p>
+<p>You have {{ losing_days_count }} losing day{{ losing_days_count|pluralize }}</p>
+<p>{{ winning_day_percent }}% of days are profitable</p>
+
+<pre>{{ r_per_day }}</pre>

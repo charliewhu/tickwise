@@ -4,40 +4,40 @@
 
 ### Features Planned:
 - Trade data (user added)
-	- Entry
-	- Stop
-	- Target
-	- Exit
-	- Instrument
-	- Long/Short
-	- Trigger timeframe
-	- Highest/lowest price (automate in future)
-	- Entry strategy
-	- Management strategy
-	- Exit strategy
-	- Confluence factor
-	- Entry grade
-	- Stop grade
-	- Target grade
-	- Management grade
+	[x] Instrument
+	[x] Long/Short
+	[x] Entry
+	[x] Stop
+	[x] Target
+	[x] Exit
+	[x] Trigger timeframe
+	[] Highest/lowest price (automate in future)
+	[] Entry strategy
+	[] Management strategy
+	[] Exit strategy
+	[] Confluence factor
+	[x] Entry grade
+	[] Stop grade
+	[] Target grade
+	[x] Management grade
 - Trade derived data
-	- Planned R
-	- Actual R
-	- MAE / MFE
+	[x] Planned R
+	[x] Actual R
+	[] MAE / MFE
 - Summary data
-	- Number / % winners / losers
-	- Expectancy
-	- Avg winner / loser
-	- Current win / lose streak
-	- Number / % winning days
-	- Avg MAE / MFE
+	[x] Number / % winners / losers
+	[x] Expectancy
+	[x] Avg winner / loser
+	[x] Current win / lose streak
+	[x] Number / % winning days
+	[] Avg MAE / MFE
 
 
 ### Technology:
 - Django with Nanodjango - enabling a rapid prototype
 - Django Ninja - for REST API endpoints
 - SQLite3 - development database
-- pytest - testing
+- pytest - testing (waiting on this feature)
 - ruff - formatting
 - pyright - static type checking
 - pre-commit - precommit hooks
