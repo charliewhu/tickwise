@@ -11,26 +11,26 @@
 	- [x] Target
 	- [x] Exit
 	- [x] Trigger timeframe
-	- [] Highest/lowest price (automate in future)
-	- [] Entry strategy
-	- [] Management strategy
-	- [] Exit strategy
-	- [] Confluence factor
+	- [ ] Highest/lowest price (automate in future)
+	- [ ] Entry strategy
+	- [ ] Management strategy
+	- [ ] Exit strategy
+	- [ ] Confluence factor
 	- [x] Entry grade
-	- [] Stop grade
-	- [] Target grade
+	- [ ] Stop grade
+	- [ ] Target grade
 	- [x] Management grade
 - Trade derived data
 	- [x] Planned R
 	- [x] Actual R
-	- [] MAE / MFE
+	- [ ] MAE / MFE
 - Summary data
 	- [x] Number / % winners / losers
 	- [x] Expectancy
 	- [x] Avg winner / loser
 	- [x] Current win / lose streak
 	- [x] Number / % winning days
-	- [] Avg MAE / MFE
+	- [ ] Avg MAE / MFE
 
 
 ### How to run 
