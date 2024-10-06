@@ -33,6 +33,15 @@
 	[] Avg MAE / MFE
 
 
+### How to run 
+
+```bash
+uv sync --frozen
+
+nanodjango run main.py
+```
+
+
 ### Technology:
 - Django with Nanodjango - enabling a rapid prototype
 - Django Ninja - for REST API endpoints
