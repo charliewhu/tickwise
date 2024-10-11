@@ -3,6 +3,10 @@
 ## An alternative journal software with statistical analysis
 
 ### Features Planned:
+- Account management
+	- [x] Balance
+	- [x] Deposits
+	- [x] Withdrawals
 - Trade data (user added)
 	- [x] Instrument
 	- [x] Long/Short
@@ -10,10 +14,13 @@
 	- [x] Stop
 	- [x] Target
 	- [x] Exit
+    - [x] Monetary profit
+	- [x] Commissions
 	- [x] Trigger timeframe
-	- [ ] Highest/lowest price (automate in future)
+	- [x] Highest/lowest price (automate in future)
 	- [ ] Entry strategy
 	- [ ] Management strategy
+    - [x] Hit original target checkbox
 	- [ ] Exit strategy
 	- [ ] Confluence factor
 	- [x] Entry grade
@@ -24,13 +31,27 @@
 	- [x] Planned R
 	- [x] Actual R
 	- [ ] MAE / MFE
-- Summary data
-	- [x] Number / % winners / losers
-	- [x] Expectancy
-	- [x] Avg winner / loser
-	- [x] Current win / lose streak
-	- [x] Number / % winning days
-	- [ ] Avg MAE / MFE
+- Display
+    - [ ] List of trades
+    - Charts
+        - [x] Total R by day
+        - [ ] Total R by week
+        - [ ] Total R by instrument
+        - [ ] MAE + MFE per trade
+        - [ ] Cumulative P&L + underwater chart
+        - [ ] Management chart
+        - [ ] Holding time vs Return
+        - [ ] Risk reward frequency histogram
+        - [ ] Simulator
+    - Summary data
+        - [x] Number / % winners / losers
+        - [x] Expectancy
+        - [x] Avg planned R
+        - [x] Avg winner / loser
+        - [x] Current win / lose streak
+        - [x] Number / % winning days
+        - [ ] Max consecutive wins/losses
+        - [ ] Avg MAE / MFE
 
 
 ### How to run 

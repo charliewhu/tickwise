@@ -331,6 +331,7 @@ name = "tickwise"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "django" },
     { name = "nanodjango" },
 ]
 
@@ -343,7 +344,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "nanodjango", specifier = ">=0.9.1" }]
+requires-dist = [
+    { name = "django", specifier = ">=5.1.1" },
+    { name = "nanodjango", specifier = ">=0.9.1" },
+]
 
 [package.metadata.requires-dev]
 dev = [
