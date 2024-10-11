@@ -18,13 +18,13 @@
 	- [x] Commissions
 	- [x] Trigger timeframe
 	- [x] Highest/lowest price (automate in future)
-	- [ ] Entry strategy
-	- [ ] Management strategy
+	- [x] Entry strategy
+	- [x] Management strategy
     - [x] Hit original target checkbox
-	- [ ] Exit strategy
+	- [x] Exit strategy
 	- [ ] Confluence factor
 	- [x] Entry grade
-	- [ ] Stop grade
+	- [x] Stop grade
 	- [ ] Target grade
 	- [x] Management grade
 - Trade derived data
@@ -32,7 +32,7 @@
 	- [x] Actual R
 	- [ ] MAE / MFE
 - Display
-    - [ ] List of trades
+    - [x] List of trades
     - Charts
         - [x] Total R by day
         - [ ] Total R by week

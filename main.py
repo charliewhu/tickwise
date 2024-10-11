@@ -118,6 +118,54 @@ class TimeframeAdmin(admin.ModelAdmin):
     pass
 
 
+class EntryTrigger(BaseModel):
+    name = models.CharField(max_length=30)
+    description = models.TextField(max_length=200, null=True, blank=True)
+
+    if t.TYPE_CHECKING:
+        trades = RelatedManager["Trade"]()
+
+    def __str__(self) -> str:
+        return self.name
+
+
+@admin.register(EntryTrigger)
+class EntryTriggerAdmin(admin.ModelAdmin):
+    pass
+
+
+class ExitTrigger(BaseModel):
+    name = models.CharField(max_length=30)
+    description = models.TextField(max_length=200, null=True, blank=True)
+
+    if t.TYPE_CHECKING:
+        trades = RelatedManager["Trade"]()
+
+    def __str__(self) -> str:
+        return self.name
+
+
+@admin.register(ExitTrigger)
+class ExitTriggerAdmin(admin.ModelAdmin):
+    pass
+
+
+class ManagementStrategy(BaseModel):
+    name = models.CharField(max_length=30)
+    description = models.TextField(max_length=200, null=True, blank=True)
+
+    if t.TYPE_CHECKING:
+        trades = RelatedManager["Trade"]()
+
+    def __str__(self) -> str:
+        return self.name
+
+
+@admin.register(ManagementStrategy)
+class ManagementStrategyAdmin(admin.ModelAdmin):
+    pass
+
+
 class TradeQueryset(models.QuerySet["Trade"]):
     # summary statistics
 
@@ -322,6 +370,30 @@ class Trade(BaseModel):
         null=True,
         blank=True,
         help_text="The fees paid on the trade. Use negative numbers for costs.",
+    )
+
+    entry_trigger = models.ForeignKey(
+        EntryTrigger,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="trades",
+    )
+
+    exit_trigger = models.ForeignKey(
+        ExitTrigger,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="trades",
+    )
+
+    management_strategy = models.ForeignKey(
+        ManagementStrategy,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="trades",
     )
 
     entry_grade = models.CharField(
