@@ -22,10 +22,12 @@
 	- [x] Management strategy
     - [x] Hit original target checkbox
 	- [x] Exit strategy
-	- [ ] Confluence factor
+	- [x] Confluence factors
+        - Trade has many re-defined confluence categories, eg which price action, is level visible on other timeframes
+        - These confluence categories have pre-defined options eg for category 'price action', options could be pinbar, engulfing etc.
 	- [x] Entry grade
 	- [x] Stop grade
-	- [ ] Target grade
+	- [x] Target grade
 	- [x] Management grade
 - Trade derived data
 	- [x] Planned R

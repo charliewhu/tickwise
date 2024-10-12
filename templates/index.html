@@ -25,11 +25,19 @@
         <th>Ticker</th>
         <th>Direction</th>
         <th>Entry Date</th>
-        <th>Exit Date</th>
         <th>Entry Price</th>
         <th>Stop Price</th>
         <th>Target Price</th>
+        <th>Trigger Timeframe</th>
+        <th>Entry Trigger</th>
+
+        <th>Exit Date</th>
         <th>Exit Price</th>
+        <th>Exit Trigger</th>
+        <th>Profit/Loss</th>
+        <th>Fees</th>
+        <th>Management</th>
+
         <th>Planned R</th>
         <th>Actual R</th>
     </tr>
@@ -38,11 +46,19 @@
         <td>{{ trade.ticker }}</td>
         <td>{{ trade.direction }}</td>
         <td>{{ trade.entered_at }}</td>
-        <td>{{ trade.exited_at }}</td>
-        <td>{{ trade.stop_price }}</td>
         <td>{{ trade.entry_price }}</td>
+        <td>{{ trade.stop_price }}</td>
         <td>{{ trade.target_price }}</td>
+        <td>{{ trade.trigger_timeframe }}</td>
+        <td>{{ trade.entry_trigger }}</td>
+
         <td>{{ trade.exit_price }}</td>
+        <td>{{ trade.exited_at }}</td>
+        <td>{{ trade.exit_trigger }}</td>
+        <td>{{ trade.profit_loss }}</td>
+        <td>{{ trade.fees }}</td>
+        <td>{{ trade.management_strategy }}</td>
+
         <td>{{ trade.planned_r }}</td>
         <td>{{ trade.actual_r }}</td>
     </tr>

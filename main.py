@@ -26,11 +26,14 @@ class BaseModel(models.Model):
 
 
 class Account(BaseModel):
-    # TODO: broker account info fields
+    name = models.CharField(max_length=20)
 
     if t.TYPE_CHECKING:
         transactions = RelatedManager["AccountTransaction"]()
         trades = RelatedManager["Trade"]()
+
+    def __str__(self) -> str:
+        return self.name
 
     # summary statistics
     def get_current_balance(self):
@@ -151,6 +154,9 @@ class ExitTriggerAdmin(admin.ModelAdmin):
 
 
 class ManagementStrategy(BaseModel):
+    class Meta:  # type: ignore
+        verbose_name_plural = "Management Strategies"
+
     name = models.CharField(max_length=30)
     description = models.TextField(max_length=200, null=True, blank=True)
 
@@ -164,6 +170,47 @@ class ManagementStrategy(BaseModel):
 @admin.register(ManagementStrategy)
 class ManagementStrategyAdmin(admin.ModelAdmin):
     pass
+
+
+class Confluence(BaseModel):
+    name = models.CharField(max_length=30)
+    description = models.TextField(max_length=200, null=True, blank=True)
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class ConfluenceOption(BaseModel):
+    confluence = models.ForeignKey(
+        Confluence,
+        on_delete=models.CASCADE,
+    )
+    name = models.CharField(max_length=30)
+    description = models.TextField(max_length=200, null=True, blank=True)
+
+    if t.TYPE_CHECKING:
+        trades = RelatedManager["Trade"]()
+
+    def __str__(self) -> str:
+        return f"{self.confluence} - {self.name}"
+
+
+@admin.register(ConfluenceOption)
+class ConfluenceOptionAdmin(admin.ModelAdmin):
+    model = ConfluenceOption
+
+
+# @admin.register(ConfluenceOption)
+class ConfluenceOptionInlineAdmin(admin.StackedInline):
+    model = ConfluenceOption
+
+
+# @admin.register(Confluence)
+class ConfluenceAdmin(admin.ModelAdmin):
+    inlines = [ConfluenceOptionInlineAdmin]
+
+
+admin.site.register(Confluence, ConfluenceAdmin)
 
 
 class TradeQueryset(models.QuerySet["Trade"]):
@@ -320,6 +367,7 @@ class Trade(BaseModel):
         ("c", "C"),
     ]
 
+    # General trade data
     account = models.ForeignKey(
         Account,
         on_delete=models.CASCADE,
@@ -336,42 +384,18 @@ class Trade(BaseModel):
         max_length=5,
         choices=[("LONG", "Long"), ("SHORT", "Short")],
     )
+
+    # Entry data
+    entered_at = models.DateTimeField()
+    entry_price = models.DecimalField(max_digits=12, decimal_places=5)
+    stop_price = models.DecimalField(max_digits=12, decimal_places=5)
+    target_price = models.DecimalField(max_digits=12, decimal_places=5)
     trigger_timeframe = models.ForeignKey(
         Timeframe,
         on_delete=models.SET_NULL,
         null=True,
         related_name="trades",
     )
-
-    entered_at = models.DateTimeField()
-    exited_at = models.DateTimeField(blank=True, null=True)
-
-    entry_price = models.DecimalField(max_digits=12, decimal_places=5)
-    stop_price = models.DecimalField(max_digits=12, decimal_places=5)
-    target_price = models.DecimalField(max_digits=12, decimal_places=5)
-    exit_price = models.DecimalField(
-        max_digits=12,
-        decimal_places=5,
-        blank=True,
-        null=True,
-    )
-    hit_original_target = models.BooleanField(blank=True, null=True)
-    profit_loss = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text="The Profit/Loss on the trade in £. Do not include fees",
-    )
-
-    fees = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text="The fees paid on the trade. Use negative numbers for costs.",
-    )
-
     entry_trigger = models.ForeignKey(
         EntryTrigger,
         on_delete=models.SET_NULL,
@@ -379,13 +403,41 @@ class Trade(BaseModel):
         blank=True,
         related_name="trades",
     )
+    confluences = models.ManyToManyField(
+        ConfluenceOption,
+        related_name="trades",
+        null=True,
+        blank=True,
+    )
 
+    # Exit data
+    exited_at = models.DateTimeField(blank=True, null=True)
+    exit_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=5,
+        blank=True,
+        null=True,
+    )
     exit_trigger = models.ForeignKey(
         ExitTrigger,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="trades",
+    )
+    profit_loss = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="The gross Profit/Loss on the trade in £. Do not include fees",
+    )
+    fees = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="The fees paid on the trade. Use negative numbers for costs.",
     )
 
     management_strategy = models.ForeignKey(
@@ -396,17 +448,35 @@ class Trade(BaseModel):
         related_name="trades",
     )
 
+    # Post trade reflection
+    hit_original_target = models.BooleanField(blank=True, null=True)
+    min_price_during_trade = models.DecimalField(
+        max_digits=12,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        help_text="The lowest price we reached during the trade length. Account for spread.",
+    )
+    max_price_during_trade = models.DecimalField(
+        max_digits=12,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        help_text="The highest price we reached during the trade length. Account for spread.",
+    )
     entry_grade = models.CharField(
         max_length=1,
         choices=GRADE_CHOICES,
         null=True,
         blank=True,
+        help_text="Now that the trade has been exited. Objectively rate the entry",
     )
     exit_grade = models.CharField(
         max_length=1,
         choices=GRADE_CHOICES,
         null=True,
         blank=True,
+        help_text="Now that the trade has been exited. Objectively rate the exit",
     )
 
     # generated fields
@@ -477,6 +547,38 @@ class Trade(BaseModel):
         db_persist=False,
     )
 
+    mae_percent = models.GeneratedField(  # type: ignore
+        # Distance to stop reached divided by total stop size
+        expression=models.Case(
+            models.When(
+                models.Q(direction__exact="LONG")
+                & models.Q(min_price_during_trade__isnull=False),
+                then=(
+                    (models.F("entry_price") - models.F("min_price_during_trade"))
+                    / (models.F("entry_price") - models.F("stop_price"))
+                )
+                * 100,
+            ),
+            models.When(
+                models.Q(direction__exact="SHORT")
+                & models.Q(max_price_during_trade__isnull=False),
+                then=(
+                    (models.F("max_price_during_trade") - models.F("entry_price"))
+                    / (models.F("stop_price") - models.F("entry_price"))
+                )
+                * 100,
+            ),
+            default=None,
+            output_field=models.BooleanField(),
+        ),
+        output_field=models.DecimalField(
+            null=True,
+            max_digits=4,
+            decimal_places=2,
+        ),
+        db_persist=False,
+    )
+
     objects: TradeQueryset = TradeQueryset.as_manager()  # type: ignore
 
     class Meta:  # type: ignore
@@ -542,6 +644,74 @@ class TradeAdmin(admin.ModelAdmin):
         "planned_r",
         "actual_r",
         "is_winner",
+        "mae_percent",
+    ]
+
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": [
+                    "account",
+                    "ticker",
+                    "direction",
+                ],
+            },
+        ),
+        (
+            "Entry Inputs",
+            {
+                "classes": ["collapse"],
+                "fields": [
+                    "entered_at",
+                    "entry_price",
+                    "stop_price",
+                    "target_price",
+                    "trigger_timeframe",
+                    "entry_trigger",
+                    "confluences",
+                ],
+            },
+        ),
+        (
+            "Exit Inputs",
+            {
+                "classes": ["collapse"],
+                "fields": [
+                    "exited_at",
+                    "exit_price",
+                    "exit_trigger",
+                    "profit_loss",
+                    "fees",
+                    "management_strategy",
+                ],
+            },
+        ),
+        (
+            "Post Trade Inputs",
+            {
+                "classes": ["collapse"],
+                "fields": [
+                    "min_price_during_trade",
+                    "max_price_during_trade",
+                    "hit_original_target",
+                    "entry_grade",
+                    "exit_grade",
+                ],
+            },
+        ),
+        (
+            "Trade Stats",
+            {
+                "classes": ["collapse"],
+                "fields": [
+                    "is_winner",
+                    "planned_r",
+                    "actual_r",
+                    "mae_percent",
+                ],
+            },
+        ),
     ]
 
 
