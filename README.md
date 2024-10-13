@@ -61,12 +61,13 @@
 ```bash
 uv sync --frozen
 
-nanodjango run main.py
+python manage.py migrate
+python manage.py runserver
 ```
 
 
 ### Technology:
-- Django with Nanodjango - enabling a rapid prototype
+- Django
 - Django Ninja - for REST API endpoints
 - SQLite3 - development database
 - pytest - testing (waiting on this feature)

@@ -1,20 +1,13 @@
-from decimal import Decimal, InvalidOperation
 import typing as t
 
-from django.contrib import admin
 from django.db import models
-from django.db.models.functions import TruncDate, Round
-from django.http import HttpRequest
-from django.shortcuts import render
 
+from .querysets import TradeQueryset
 
-from nanodjango import Django
 
 if t.TYPE_CHECKING:
     # This doesn't really exists on django so it always need to be imported this way
     from django.db.models.manager import RelatedManager
-
-app = Django(ADMIN_URL="admin/")
 
 
 class BaseModel(models.Model):
@@ -57,11 +50,6 @@ class Account(BaseModel):
     # list objects
 
 
-@admin.register(Account)
-class AccountAdmin(admin.ModelAdmin):
-    pass
-
-
 class AccountTransaction(BaseModel):
     account = models.ForeignKey(
         Account,
@@ -86,11 +74,6 @@ class AccountTransaction(BaseModel):
             return "Withdrawal"
 
 
-@admin.register(AccountTransaction)
-class AccountTransactionAdmin(admin.ModelAdmin):
-    pass
-
-
 class Ticker(models.Model):
     name = models.CharField(max_length=10)
 
@@ -101,11 +84,6 @@ class Ticker(models.Model):
         return self.name
 
 
-@admin.register(Ticker)
-class TickerAdmin(admin.ModelAdmin):
-    pass
-
-
 class Timeframe(models.Model):
     name = models.CharField(max_length=10)
 
@@ -114,11 +92,6 @@ class Timeframe(models.Model):
 
     def __str__(self) -> str:
         return self.name
-
-
-@admin.register(Timeframe)
-class TimeframeAdmin(admin.ModelAdmin):
-    pass
 
 
 class EntryTrigger(BaseModel):
@@ -132,11 +105,6 @@ class EntryTrigger(BaseModel):
         return self.name
 
 
-@admin.register(EntryTrigger)
-class EntryTriggerAdmin(admin.ModelAdmin):
-    pass
-
-
 class ExitTrigger(BaseModel):
     name = models.CharField(max_length=30)
     description = models.TextField(max_length=200, null=True, blank=True)
@@ -146,11 +114,6 @@ class ExitTrigger(BaseModel):
 
     def __str__(self) -> str:
         return self.name
-
-
-@admin.register(ExitTrigger)
-class ExitTriggerAdmin(admin.ModelAdmin):
-    pass
 
 
 class ManagementStrategy(BaseModel):
@@ -165,11 +128,6 @@ class ManagementStrategy(BaseModel):
 
     def __str__(self) -> str:
         return self.name
-
-
-@admin.register(ManagementStrategy)
-class ManagementStrategyAdmin(admin.ModelAdmin):
-    pass
 
 
 class Confluence(BaseModel):
@@ -193,171 +151,6 @@ class ConfluenceOption(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.confluence} - {self.name}"
-
-
-@admin.register(ConfluenceOption)
-class ConfluenceOptionAdmin(admin.ModelAdmin):
-    model = ConfluenceOption
-
-
-# @admin.register(ConfluenceOption)
-class ConfluenceOptionInlineAdmin(admin.StackedInline):
-    model = ConfluenceOption
-
-
-# @admin.register(Confluence)
-class ConfluenceAdmin(admin.ModelAdmin):
-    inlines = [ConfluenceOptionInlineAdmin]
-
-
-admin.site.register(Confluence, ConfluenceAdmin)
-
-
-class TradeQueryset(models.QuerySet["Trade"]):
-    # summary statistics
-
-    def get_total_return(self):
-        return round(
-            self.exclude(exit_price__isnull=True).aggregate(
-                models.Sum("actual_r", default=0)
-            )["actual_r__sum"],
-            2,
-        )
-
-    def get_win_count(self):
-        return self.filter(actual_r__gt=0).count()
-
-    def get_loss_count(self):
-        return self.filter(actual_r__lte=0).count()
-
-    def get_strike_rate(self):
-        try:
-            return round(Decimal(self.get_win_count() / self.count()), 3)
-        except ZeroDivisionError:
-            return 0
-
-    def get_average_planned_r(self):
-        try:
-            return round(
-                self.aggregate(models.Sum("planned_r", default=0))["planned_r__sum"]
-                / self.count(),
-                2,
-            )
-
-        except (ZeroDivisionError, InvalidOperation):
-            return 0
-
-    def get_average_trade(self):
-        if count := self.count():
-            return self.get_total_return() / count
-
-        return 0
-
-    def get_average_winner(self):
-        win_count = self.filter(is_winner=True).count()
-        if not win_count:
-            return 0
-
-        return (
-            round(
-                self.exclude(exit_price__isnull=True)
-                .filter(is_winner=True)
-                .aggregate(models.Sum("actual_r", default=0))["actual_r__sum"],
-                2,
-            )
-            / win_count
-        )
-
-    def get_average_loser(self):
-        loss_count = self.filter(is_winner=False).count()
-        if not loss_count:
-            return 0
-
-        return (
-            round(
-                self.exclude(exit_price__isnull=True)
-                .filter(is_winner=False)
-                .aggregate(models.Sum("actual_r", default=0))["actual_r__sum"],
-                2,
-            )
-            / loss_count
-        )
-
-    def get_profit_factor(self):
-        try:
-            return Decimal(
-                round(abs(self.get_average_winner() / self.get_average_loser()), 2)
-            )
-        except ZeroDivisionError:
-            return None
-
-    def get_expectancy(self):
-        if (profit_factor := self.get_profit_factor()) is None:
-            return self.get_average_trade()
-
-        return round(profit_factor * self.get_strike_rate() - 1, 2)
-
-    def get_winning_days_count(self):
-        return self.list_total_r_by_day().filter(total_r__gt=0).count()
-
-    def get_losing_days_count(self):
-        return self.list_total_r_by_day().filter(total_r__lte=0).count()
-
-    def get_total_trading_days_count(self):
-        return (
-            self.annotate(day=TruncDate("entered_at")).values("day").distinct().count()
-        )
-
-    def get_average_trading_day_r(self):
-        return self.get_total_return() / self.get_total_trading_days_count()
-
-    def get_winning_days_percent(self):
-        try:
-            return round(
-                (self.get_winning_days_count() / self.get_total_trading_days_count())
-                * 100,
-                1,
-            )
-        except ZeroDivisionError:
-            return 0
-
-    def get_max_consecutive_winners(self):
-        transactions = Trade.objects.order_by("exited_at").values_list(
-            "actual_r", flat=True
-        )
-
-        max_streak = 0
-        current_streak = 0
-
-        for actual_r in transactions:
-            current_streak = current_streak + 1 if actual_r > 0 else 0
-            max_streak = max(max_streak, current_streak)
-
-        return max_streak
-
-    def get_max_consecutive_losers(self):
-        transactions = Trade.objects.order_by("exited_at").values_list(
-            "actual_r", flat=True
-        )
-
-        max_streak = 0
-        current_streak = 0
-
-        for actual_r in transactions:
-            current_streak = current_streak + 1 if actual_r <= 0 else 0
-            max_streak = max(max_streak, current_streak)
-
-        return max_streak
-
-    # list objects
-    def list_total_r_by_day(self):
-        qs = (
-            self.annotate(day=TruncDate("entered_at"))
-            .values("day")
-            .annotate(total_r=Round(models.Sum("actual_r", default=0), 2))
-            .order_by("day")
-        )
-        return qs
 
 
 class Trade(BaseModel):
@@ -406,8 +199,6 @@ class Trade(BaseModel):
     confluences = models.ManyToManyField(
         ConfluenceOption,
         related_name="trades",
-        null=True,
-        blank=True,
     )
 
     # Exit data
@@ -636,107 +427,3 @@ class Trade(BaseModel):
     @property
     def is_long(self):
         return self.direction == "LONG"
-
-
-@admin.register(Trade)
-class TradeAdmin(admin.ModelAdmin):
-    readonly_fields = [
-        "planned_r",
-        "actual_r",
-        "is_winner",
-        "mae_percent",
-    ]
-
-    fieldsets = [
-        (
-            None,
-            {
-                "fields": [
-                    "account",
-                    "ticker",
-                    "direction",
-                ],
-            },
-        ),
-        (
-            "Entry Inputs",
-            {
-                "classes": ["collapse"],
-                "fields": [
-                    "entered_at",
-                    "entry_price",
-                    "stop_price",
-                    "target_price",
-                    "trigger_timeframe",
-                    "entry_trigger",
-                    "confluences",
-                ],
-            },
-        ),
-        (
-            "Exit Inputs",
-            {
-                "classes": ["collapse"],
-                "fields": [
-                    "exited_at",
-                    "exit_price",
-                    "exit_trigger",
-                    "profit_loss",
-                    "fees",
-                    "management_strategy",
-                ],
-            },
-        ),
-        (
-            "Post Trade Inputs",
-            {
-                "classes": ["collapse"],
-                "fields": [
-                    "min_price_during_trade",
-                    "max_price_during_trade",
-                    "hit_original_target",
-                    "entry_grade",
-                    "exit_grade",
-                ],
-            },
-        ),
-        (
-            "Trade Stats",
-            {
-                "classes": ["collapse"],
-                "fields": [
-                    "is_winner",
-                    "planned_r",
-                    "actual_r",
-                    "mae_percent",
-                ],
-            },
-        ),
-    ]
-
-
-@app.route("/")
-def index(request: HttpRequest):
-    context = {
-        "trade_count": Trade.objects.count(),
-        "total_return": Trade.objects.get_total_return(),
-        "win_count": Trade.objects.get_win_count(),
-        "loss_count": Trade.objects.get_loss_count(),
-        "strike_rate": round(Trade.objects.get_strike_rate() * 100, 1),
-        "average_trade": Trade.objects.get_average_trade(),
-        "average_winner": Trade.objects.get_average_winner(),
-        "average_loser": Trade.objects.get_average_loser(),
-        "average_planned_r": Trade.objects.get_average_planned_r(),
-        "expectancy": Trade.objects.get_expectancy(),
-        "average_trading_day_r": Trade.objects.get_average_trading_day_r(),
-        "profit_factor": Trade.objects.get_profit_factor(),
-        "winning_days_count": Trade.objects.get_winning_days_count(),
-        "losing_days_count": Trade.objects.get_losing_days_count(),
-        "winning_day_percent": Trade.objects.get_winning_days_percent(),
-        "max_consecutive_winners": Trade.objects.get_max_consecutive_winners(),
-        "max_consecutive_losers": Trade.objects.get_max_consecutive_losers(),
-        "current_balance": Account.objects.get(pk=1).get_current_balance(),
-        "trades": Trade.objects.all(),
-    }
-
-    return render(request, "index.html", context)
