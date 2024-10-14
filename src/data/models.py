@@ -2,7 +2,7 @@ import typing as t
 
 from django.db import models
 
-from .querysets import TradeQueryset
+from src.data import querysets
 
 
 if t.TYPE_CHECKING:
@@ -370,7 +370,7 @@ class Trade(BaseModel):
         db_persist=False,
     )
 
-    objects: TradeQueryset = TradeQueryset.as_manager()  # type: ignore
+    objects: querysets.TradeQueryset = querysets.TradeManager()
 
     class Meta:  # type: ignore
         constraints = [

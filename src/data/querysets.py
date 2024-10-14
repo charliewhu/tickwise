@@ -1,13 +1,11 @@
-from decimal import Decimal, InvalidOperation
 import typing as t
+import decimal
 
 from django.db import models
 from django.db.models.functions import TruncDate, Round
 
-
 if t.TYPE_CHECKING:
-    # This doesn't really exists on django so it always need to be imported this way
-    from .models import Trade
+    from .models import Trade  # noqa: F401
 
 
 class TradeQueryset(models.QuerySet["Trade"]):
@@ -29,7 +27,7 @@ class TradeQueryset(models.QuerySet["Trade"]):
 
     def get_strike_rate(self):
         try:
-            return round(Decimal(self.get_win_count() / self.count()), 3)
+            return round(decimal.Decimal(self.get_win_count() / self.count()), 3)
         except ZeroDivisionError:
             return 0
 
@@ -41,7 +39,7 @@ class TradeQueryset(models.QuerySet["Trade"]):
                 2,
             )
 
-        except (ZeroDivisionError, InvalidOperation):
+        except (ZeroDivisionError, decimal.InvalidOperation):
             return 0
 
     def get_average_trade(self):
@@ -82,7 +80,7 @@ class TradeQueryset(models.QuerySet["Trade"]):
 
     def get_profit_factor(self):
         try:
-            return Decimal(
+            return decimal.Decimal(
                 round(abs(self.get_average_winner() / self.get_average_loser()), 2)
             )
         except ZeroDivisionError:
@@ -106,7 +104,10 @@ class TradeQueryset(models.QuerySet["Trade"]):
         )
 
     def get_average_trading_day_r(self):
-        return self.get_total_return() / self.get_total_trading_days_count()
+        try:
+            return self.get_total_return() / self.get_total_trading_days_count()
+        except decimal.InvalidOperation:
+            return 0
 
     def get_winning_days_percent(self):
         try:
@@ -119,9 +120,7 @@ class TradeQueryset(models.QuerySet["Trade"]):
             return 0
 
     def get_max_consecutive_winners(self):
-        transactions = Trade.objects.order_by("exited_at").values_list(
-            "actual_r", flat=True
-        )
+        transactions = self.order_by("exited_at").values_list("actual_r", flat=True)
 
         max_streak = 0
         current_streak = 0
@@ -133,9 +132,7 @@ class TradeQueryset(models.QuerySet["Trade"]):
         return max_streak
 
     def get_max_consecutive_losers(self):
-        transactions = Trade.objects.order_by("exited_at").values_list(
-            "actual_r", flat=True
-        )
+        transactions = self.order_by("exited_at").values_list("actual_r", flat=True)
 
         max_streak = 0
         current_streak = 0
@@ -155,3 +152,6 @@ class TradeQueryset(models.QuerySet["Trade"]):
             .order_by("day")
         )
         return qs
+
+
+TradeManager = models.Manager.from_queryset(TradeQueryset)
