@@ -1,5 +1,5 @@
-from ._services import get_summary_stats
+from ._services import get_trade_summary_stats
 
 __all__ = [
-    "get_summary_stats",
+    "get_trade_summary_stats",
 ]

@@ -25,9 +25,14 @@ class TradeQueryset(models.QuerySet["Trade"]):
     def get_loss_count(self):
         return self.filter(actual_r__lte=0).count()
 
+    def get_trade_count(self):
+        return self.count()
+
     def get_strike_rate(self):
         try:
-            return round(decimal.Decimal(self.get_win_count() / self.count()), 3)
+            return round(
+                decimal.Decimal(self.get_win_count() / self.get_trade_count()), 3
+            )
         except ZeroDivisionError:
             return 0
 
@@ -49,19 +54,20 @@ class TradeQueryset(models.QuerySet["Trade"]):
         return 0
 
     def get_average_winner(self):
-        win_count = self.filter(is_winner=True).count()
-        if not win_count:
-            return 0
+        win_count = self.get_win_count()
 
-        return (
-            round(
-                self.exclude(exit_price__isnull=True)
-                .filter(is_winner=True)
-                .aggregate(models.Sum("actual_r", default=0))["actual_r__sum"],
-                2,
+        try:
+            return (
+                round(
+                    self.exclude(exit_price__isnull=True)
+                    .filter(is_winner=True)
+                    .aggregate(models.Sum("actual_r", default=0))["actual_r__sum"],
+                    2,
+                )
+                / win_count
             )
-            / win_count
-        )
+        except (ZeroDivisionError, decimal.InvalidOperation):
+            return 0
 
     def get_average_loser(self):
         loss_count = self.filter(is_winner=False).count()

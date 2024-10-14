@@ -1,9 +1,9 @@
 from src.data import models
 
 
-def get_summary_stats():
+def get_trade_summary_stats():
     return {
-        "trade_count": models.Trade.objects.count(),
+        "trade_count": models.Trade.objects.get_trade_count(),
         "total_return": models.Trade.objects.get_total_return(),
         "win_count": models.Trade.objects.get_win_count(),
         "loss_count": models.Trade.objects.get_loss_count(),
